@@ -1,477 +1,598 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AC Unmatched → WATI Builder</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<style>
-:root{
-  --navy:#14304F; --navy-deep:#0C1F35; --rust:#C2571B; --rust-dark:#A04310;
-  --paper:#EFF3F7; --card:#FFFFFF; --ink:#182430; --muted:#5F6F81;
-  --line:#D9E1E9; --green:#177A4C; --red:#B23A2F; --amber:#A8720E;
-  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5}
-a{color:var(--rust)}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tool Enchantment — Pastel Automation Suite</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e879f9'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='32' fill='url(%23g)'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' font-family='serif'%3E✨%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
-header{background:var(--navy);color:#fff;padding:22px 28px;border-bottom:4px solid var(--rust)}
-.head-inner{max-width:1120px;margin:0 auto;display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
-header h1{font-size:19px;font-weight:700;letter-spacing:.2px}
-header h1 span{color:#F4B98A;font-weight:600}
-.head-tag{font-family:var(--mono);font-size:11.5px;color:#9FB4CB;letter-spacing:.4px}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-main{max-width:1120px;margin:0 auto;padding:26px 28px 64px}
-.privacy{font-size:12.5px;color:var(--muted);margin-bottom:20px}
-.privacy b{color:var(--ink)}
+    body {
+      font-family: 'Nunito', 'Segoe UI', sans-serif;
+      background: #fdf6ff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      padding-bottom: 3rem;
+    }
 
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-@media(max-width:840px){.grid{grid-template-columns:1fr}}
+    #mgBg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
 
-.stage{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px}
-.stage.full{grid-column:1/-1}
-.stage-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.stage-num{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--navy);border-radius:5px;padding:2px 8px}
-.stage-head h2{font-size:15px;font-weight:600}
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0;
+      animation: bubbleFloat ease-in-out infinite;
+    }
 
-.drop{border:1.5px dashed var(--line);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:12px;background:#FAFCFE}
-.drop:hover,.drop:focus-visible{border-color:var(--rust);outline:none}
-.drop.over{border-color:var(--rust);background:#FCF3EC}
-.drop.loaded{border-style:solid;border-color:var(--green);background:#F2F9F5}
-.drop .d-title{font-weight:600;font-size:14px}
-.drop .d-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
-.drop .d-file{font-family:var(--mono);font-size:12.5px;color:var(--green);margin-top:6px;word-break:break-all}
-.drop input{display:none}
+    @keyframes bubbleFloat {
+      0%   { transform: translateY(0) scale(1); opacity: 0; }
+      15%  { opacity: 0.6; }
+      80%  { opacity: 0.3; }
+      100% { transform: translateY(-110vh) scale(0.6); opacity: 0; }
+    }
 
-.colmap{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;font-size:13px;margin-bottom:14px}
-.colmap label{color:var(--muted);white-space:nowrap}
-select,input[type=text]{font-family:var(--mono);font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);width:100%}
-select:focus,input[type=text]:focus{outline:2px solid var(--rust);outline-offset:1px;border-color:var(--rust)}
+    .sparkle {
+      position: absolute;
+      font-size: 13px;
+      animation: sparkleTwinkle ease-in-out infinite;
+      pointer-events: none;
+    }
 
-.rule{display:flex;gap:16px;font-size:13.5px;flex-wrap:wrap;margin-top:4px}
-.rule label{display:flex;gap:6px;align-items:center;cursor:pointer}
-.rule input{accent-color:var(--rust)}
+    @keyframes sparkleTwinkle {
+      0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+      40%, 60%  { opacity: 1; transform: scale(1.2) rotate(20deg); }
+    }
 
-.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
-@media(max-width:560px){.fields{grid-template-columns:1fr}}
-.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
-.field .hint{font-size:11.5px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
-.field.wide{grid-column:1/-1}
+    .floating-hearts {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
 
-.testrow{margin-top:16px;border:1px solid var(--line);border-left:3px solid var(--rust);border-radius:8px;padding:12px 14px;background:#FDF8F3}
-.testrow .tr-head{font-size:12.5px;font-weight:600;margin-bottom:10px;color:var(--rust-dark)}
-.trgrid{display:grid;grid-template-columns:64px 1fr 1.3fr;gap:10px}
-@media(max-width:560px){.trgrid{grid-template-columns:64px 1fr}.trgrid .field:last-child{grid-column:1/-1}}
-tr.testhl td{background:#FCF0E5;font-weight:600}
+    .fheart {
+      position: absolute;
+      font-size: 11px;
+      animation: heartFloat ease-in-out infinite;
+      opacity: 0;
+    }
 
-.filechip{margin-top:16px;background:var(--navy-deep);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:13.5px;color:#DCE6F0;word-break:break-all}
-.filechip .lbl{display:block;font-size:10.5px;letter-spacing:.6px;color:#8FA6BE;margin-bottom:4px;font-family:var(--sans);text-transform:uppercase}
-.filechip .cnt{color:#F4B98A;font-weight:600}
+    @keyframes heartFloat {
+      0%   { transform: translateY(0) scale(0.8); opacity: 0; }
+      20%  { opacity: 0.7; }
+      80%  { opacity: 0.4; }
+      100% { transform: translateY(-90px) scale(1.1); opacity: 0; }
+    }
 
-.actions{display:flex;gap:12px;align-items:center;margin-top:18px;flex-wrap:wrap}
-button{font-family:var(--sans);font-size:14.5px;font-weight:600;border:none;border-radius:7px;padding:11px 22px;cursor:pointer}
-.btn-primary{background:var(--rust);color:#fff}
-.btn-primary:hover{background:var(--rust-dark)}
-.btn-primary:disabled{background:#C9B4A5;cursor:not-allowed}
-.btn-dl{background:var(--navy);color:#fff;display:none}
-.btn-dl:hover{background:var(--navy-deep)}
-button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.status{font-size:13px;color:var(--muted)}
-.status.err{color:var(--red);font-weight:500}
+    .mg-header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
 
-.result{display:none;margin-top:20px;border-top:1px solid var(--line);padding-top:18px}
-.bignum{font-family:var(--mono);font-size:38px;font-weight:600;color:var(--rust);line-height:1.1}
-.bignum small{font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:500;display:block}
-.bar{height:14px;border-radius:7px;background:var(--navy);overflow:hidden;display:flex;margin:14px 0 8px}
-.bar .un{background:var(--rust);height:100%;width:0;transition:width .7s ease}
-@media(prefers-reduced-motion:reduce){.bar .un{transition:none}}
-.legend{display:flex;gap:18px;font-size:12.5px;color:var(--muted);margin-bottom:16px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-.legend .li-m i{background:var(--navy)} .legend .li-u i{background:var(--rust)}
+    .wand-icon {
+      font-size: 2.4rem;
+      animation: wandWave 3s ease-in-out infinite;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
 
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
-.stat{background:#F7FAFC;border:1px solid var(--line);border-radius:7px;padding:10px 12px}
-.stat .v{font-family:var(--mono);font-size:19px;font-weight:600}
-.stat .k{font-size:11.5px;color:var(--muted);margin-top:2px}
-.stat.warn .v{color:var(--amber)}
+    @keyframes wandWave {
+      0%, 100% { transform: rotate(-10deg) scale(1); }
+      25%       { transform: rotate(10deg) scale(1.1); }
+      50%       { transform: rotate(-5deg) scale(1); }
+      75%       { transform: rotate(8deg) scale(1.05); }
+    }
 
-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
-th,td{border:1px solid var(--line);padding:5px 8px;text-align:left;white-space:nowrap}
-th{background:var(--navy);color:#fff;font-weight:500;font-size:11px}
-.tblwrap{overflow-x:auto;border-radius:7px;border:1px solid var(--line)}
-.preview-note{font-size:12px;color:var(--muted);margin:12px 0 6px}
-footer{max-width:1120px;margin:0 auto;padding:0 28px 40px;font-size:12px;color:var(--muted)}
-</style>
+    .mg-crown {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #fde8f5, #ede8fd);
+      border: 1px solid rgba(210,153,230,0.4);
+      border-radius: 20px;
+      padding: 4px 18px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #a855b0;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      animation: crownGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes crownGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(210,153,230,0); }
+      50%       { box-shadow: 0 0 16px 4px rgba(210,153,230,0.3); }
+    }
+
+    .mg-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 0.25rem;
+      animation: titleRainbow 5s ease-in-out infinite;
+    }
+
+    @keyframes titleRainbow {
+      0%, 100% { color: #c026a8; }
+      33%       { color: #7c3aed; }
+      66%       { color: #db2777; }
+    }
+
+    .mg-sub {
+      font-size: 14px;
+      color: #b085c0;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .jp-text {
+      display: block;
+      font-size: 11px;
+      color: #d4a5e8;
+      letter-spacing: 3px;
+      margin-top: 5px;
+    }
+
+    .ribbon-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 1rem auto 1.75rem;
+      max-width: 420px;
+      padding: 0 1rem;
+    }
+
+    .ribbon-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(192,120,218,0.4), transparent);
+    }
+
+    .ribbon-heart {
+      font-size: 14px;
+      color: #e879b0;
+      animation: heartBeat 1.5s ease-in-out infinite;
+    }
+
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.25); }
+    }
+
+    .tools-grid {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0 1.5rem;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .tool-card {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: #fff;
+      border-left: 4px solid var(--accent, #b832c8);
+      border-radius: 14px;
+      padding: 1rem 1.1rem 1rem 1rem;
+      cursor: pointer;
+      overflow: hidden;
+      text-decoration: none;
+      box-shadow: 0 1px 4px rgba(170,100,200,0.1);
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s;
+      animation: cardFloatIn 0.5s cubic-bezier(.34,1.56,.64,1) both;
+    }
+
+    .tool-card:nth-child(1)  { animation-delay: 0.04s; }
+    .tool-card:nth-child(2)  { animation-delay: 0.08s; }
+    .tool-card:nth-child(3)  { animation-delay: 0.12s; }
+    .tool-card:nth-child(4)  { animation-delay: 0.16s; }
+    .tool-card:nth-child(5)  { animation-delay: 0.20s; }
+    .tool-card:nth-child(6)  { animation-delay: 0.24s; }
+    .tool-card:nth-child(7)  { animation-delay: 0.28s; }
+    .tool-card:nth-child(8)  { animation-delay: 0.32s; }
+    .tool-card:nth-child(9)  { animation-delay: 0.36s; }
+    .tool-card:nth-child(10) { animation-delay: 0.40s; }
+    .tool-card:nth-child(11) { animation-delay: 0.44s; }
+    .tool-card:nth-child(12) { animation-delay: 0.48s; }
+    .tool-card:nth-child(13) { animation-delay: 0.52s; }
+    .tool-card:nth-child(14) { animation-delay: 0.56s; }
+    .tool-card:nth-child(15) { animation-delay: 0.60s; }
+    .tool-card:nth-child(16) { animation-delay: 0.64s; }
+    .tool-card:nth-child(17) { animation-delay: 0.68s; }
+
+    @keyframes cardFloatIn {
+      from { transform: translateX(-16px); opacity: 0; }
+      to   { transform: translateX(0);     opacity: 1; }
+    }
+
+    .tool-card:hover {
+      transform: translateX(5px);
+      box-shadow: 0 6px 16px rgba(170,100,200,0.2);
+    }
+
+    .card-sparkle {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tool-card:hover .card-sparkle {
+      opacity: 1;
+      animation: cardSparkleAnim 0.8s ease-in-out infinite;
+    }
+
+    @keyframes cardSparkleAnim {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50%       { transform: scale(1.3) rotate(15deg); }
+    }
+
+    .card-icon-wrap {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+      margin-top: 2px;
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    .tool-card:hover .card-icon-wrap {
+      transform: rotate(-8deg) scale(1.1);
+    }
+
+    .card-text {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-name {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #6b21a8;
+      margin-bottom: 3px;
+      line-height: 1.3;
+      white-space: normal;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: #b094c4;
+      font-weight: 600;
+      white-space: normal;
+      line-height: 1.45;
+    }
+
+    .card-badge {
+      font-size: 16px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+      margin-top: 6px;
+      color: var(--accent, #b832c8);
+      transition: transform 0.25s;
+    }
+
+    .tool-card:hover .card-badge {
+      transform: translateX(4px);
+    }
+
+    .mg-footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      margin-top: 2.25rem;
+    }
+
+    .footer-pills {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    .footer-note {
+      font-size: 11px;
+      color: #d4a5e8;
+      margin-top: 10px;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 480px) {
+      .mg-title { font-size: 1.7rem; }
+      .tools-grid { padding: 0 1rem; }
+    }
+
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: linear-gradient(135deg, #fdf6ff, #f3e8ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .lock-card {
+      background: #fff;
+      border: 1.5px solid rgba(220,170,240,0.5);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(180,110,210,0.18);
+    }
+
+    .lock-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+    .lock-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #6b21a8;
+      margin-bottom: 0.4rem;
+    }
+
+    .lock-sub {
+      font-size: 12.5px;
+      color: #b094c4;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .lock-input {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border-radius: 14px;
+      border: 1.5px solid rgba(220,170,240,0.6);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 0.9rem;
+      color: #6b21a8;
+      font-weight: 700;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+
+    .lock-input:focus { border-color: #c026a8; }
+
+    .lock-btn {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #e879f9, #7c3aed);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13.5px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .lock-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124,58,237,0.3); }
+
+    .lock-error {
+      font-size: 12px;
+      color: #db2777;
+      font-weight: 700;
+      margin-top: 0.7rem;
+      min-height: 16px;
+    }
+
+    .app-content { display: none; }
+  </style>
 </head>
 <body>
 
-<header>
-  <div class="head-inner">
-    <h1>AC Unmatched → <span>WATI Builder</span></h1>
-    <div class="head-tag">Be10x · Lead Ops · abandoned cart minus paid</div>
+  <div id="lockScreen">
+    <div class="lock-card">
+      <div class="lock-icon">🔒</div>
+      <div class="lock-title">Tool Enchantment</div>
+      <div class="lock-sub">Enter your password to continue</div>
+      <input type="password" id="lockInput" class="lock-input" placeholder="Password" autocomplete="off" />
+      <button class="lock-btn" id="lockBtn">Unlock ✦</button>
+      <div class="lock-error" id="lockError"></div>
+    </div>
   </div>
-</header>
 
-<main>
-  <p class="privacy"><b>Runs entirely in your browser.</b> Files are parsed locally and never uploaded anywhere — safe for lead data.</p>
+  <div class="app-content" id="appContent">
 
-  <div class="grid">
+  <div id="mgBg"></div>
+  <div class="floating-hearts" id="hearts"></div>
 
-    <!-- STAGE 1: FILES -->
-    <section class="stage">
-      <div class="stage-head"><span class="stage-num">1</span><h2>Load files</h2></div>
+  <header class="mg-header">
+    <div class="wand-icon">✨</div>
+    <div class="mg-crown">
+      <span>pastel</span>
+      <span style="color:#e879b0;">★</span>
+      <span>automation suite</span>
+    </div>
+    <h1 class="mg-title">Tool Enchantment</h1>
+    <p class="mg-sub">Choose your tool &amp; launch instantly</p>
+    <span class="jp-text">自動化ツール · パステル · スイート</span>
+  </header>
 
-      <div class="drop" id="dropAC" tabindex="0" role="button" aria-label="Load AC data file">
-        <div class="d-title">AC data</div>
-        <div class="d-sub">Abandoned cart export · .xlsx or .csv</div>
-        <div class="d-file" id="fileAC"></div>
-        <input type="file" id="inAC" accept=".xlsx,.xls,.csv">
-      </div>
-      <div class="colmap" id="mapAC" hidden>
-        <label for="acPhone">Phone column</label><select id="acPhone"></select>
-        <label for="acEmail">Email column</label><select id="acEmail"></select>
-      </div>
-
-      <div class="drop" id="dropPD" tabindex="0" role="button" aria-label="Load paid leads file">
-        <div class="d-title">Paid leads</div>
-        <div class="d-sub">All paid leads export · .csv or .xlsx</div>
-        <div class="d-file" id="filePD"></div>
-        <input type="file" id="inPD" accept=".xlsx,.xls,.csv">
-      </div>
-      <div class="colmap" id="mapPD" hidden>
-        <label for="pdPhone">Phone column</label><select id="pdPhone"></select>
-        <label for="pdEmail">Email column</label><select id="pdEmail"></select>
-      </div>
-
-      <div class="rule" role="radiogroup" aria-label="Match rule">
-        <label><input type="radio" name="rule" value="both" checked> Match by phone or email</label>
-        <label><input type="radio" name="rule" value="phone"> Phone only</label>
-      </div>
-    </section>
-
-    <!-- STAGE 2: CAMPAIGN -->
-    <section class="stage">
-      <div class="stage-head"><span class="stage-num">2</span><h2>Campaign details</h2></div>
-      <div class="fields">
-        <div class="field">
-          <label for="fDate">Workshop date label (for filename)</label>
-          <input type="text" id="fDate" placeholder="21st June" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="fGroup">Group tag (for filename)</label>
-          <input type="text" id="fGroup" value="G1A" autocomplete="off">
-        </div>
-        <div class="field wide">
-          <label for="fWsdt">wsdt</label>
-          <input type="text" id="fWsdt" placeholder="21st June  | 11 AM" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="fTime">time</label>
-          <input type="text" id="fTime" placeholder="11.00 AM" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="fCal">calendar</label>
-          <input type="text" id="fCal" placeholder="Calendar-W1-21st-June" autocomplete="off">
-        </div>
-        <div class="field wide">
-          <label for="fZad">zoomads (webinar registration ID)</label>
-          <input type="text" id="fZad" placeholder="WN_xxxxxxxxxxxxxxxxxx" autocomplete="off">
-        </div>
-        <div class="field wide">
-          <label for="fZid">zoomid (meeting ID)</label>
-          <input type="text" id="fZid" placeholder="000 0000 0000" autocomplete="off">
-        </div>
-      </div>
-
-      <div class="testrow">
-        <div class="tr-head">Test row — added as row 1 so the broadcast reaches you first</div>
-        <div class="trgrid">
-          <div class="field">
-            <label for="tCC">CC</label>
-            <input type="text" id="tCC" value="91" autocomplete="off">
-          </div>
-          <div class="field">
-            <label for="tPhone">Your phone</label>
-            <input type="text" id="tPhone" placeholder="9876543210" autocomplete="off">
-          </div>
-          <div class="field">
-            <label for="tEmail">Your email</label>
-            <input type="text" id="tEmail" placeholder="you@be10x.com" autocomplete="off">
-          </div>
-        </div>
-      </div>
-
-      <div class="filechip">
-        <span class="lbl">Output file</span>
-        <span id="chipName"></span>
-      </div>
-    </section>
-
-    <!-- STAGE 3: RESULT -->
-    <section class="stage full">
-      <div class="stage-head"><span class="stage-num">3</span><h2>Process &amp; download</h2></div>
-      <div class="actions">
-        <button class="btn-primary" id="btnGo" disabled>Process files</button>
-        <button class="btn-dl" id="btnDl">Download CSV</button>
-        <span class="status" id="status">Load both files to start.</span>
-      </div>
-
-      <div class="result" id="result">
-        <div class="bignum"><span id="rCount">0</span><small>unmatched leads → broadcast file</small></div>
-        <div class="bar" aria-hidden="true"><div class="un" id="barUn"></div></div>
-        <div class="legend">
-          <span class="li-m"><i></i>Matched in paid (excluded)</span>
-          <span class="li-u"><i></i>Unmatched (in file)</span>
-        </div>
-        <div class="stats" id="stats"></div>
-        <div class="preview-note">Preview — first 8 rows</div>
-        <div class="tblwrap"><table id="ptable"></table></div>
-      </div>
-    </section>
+  <div class="ribbon-divider">
+    <div class="ribbon-line"></div>
+    <div class="ribbon-heart">♥</div>
+    <div class="ribbon-line"></div>
+    <div class="ribbon-heart">✦</div>
+    <div class="ribbon-line"></div>
+    <div class="ribbon-heart">♥</div>
+    <div class="ribbon-line"></div>
   </div>
-</main>
 
-<footer>Header order, TRUE/TRUE flags and CRLF line endings match the WATI import format exactly. The test row goes in as row 1; the count in the filename covers leads only. Output name: <span style="font-family:var(--mono)">&lt;date&gt; &lt;group&gt; &lt;count&gt; With ZL.csv</span></footer>
+  <main class="tools-grid" id="toolsGrid"></main>
 
-<script>
-/*ENGINE-START*/
-const DIAL = new Set(("1 7 20 27 30 31 32 33 34 36 39 40 41 43 44 45 46 47 48 49 51 52 53 54 55 56 57 58 60 61 62 63 64 65 66 81 82 84 86 90 91 92 93 94 95 98 211 212 213 216 218 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 248 249 250 251 252 253 254 255 256 257 258 260 261 262 263 264 265 266 267 268 269 291 297 298 299 350 351 352 353 354 355 356 357 358 359 370 371 372 373 374 375 376 377 378 380 381 382 383 385 386 387 389 420 421 423 500 501 502 503 504 505 506 507 508 509 590 591 592 593 594 595 596 597 598 599 670 672 673 674 675 676 677 678 679 680 681 682 683 685 686 687 688 689 690 691 692 850 852 853 855 856 880 886 960 961 962 963 964 965 966 967 968 970 971 972 973 974 975 976 977 992 993 994 995 996 998").split(" "));
+  <footer class="mg-footer">
+    <div class="footer-pills">
+      <span class="pill" style="background:#fde8f5;color:#a21caf;">18 tools ready</span>
+      <span class="pill" style="background:#ede8fd;color:#7c3aed;">pastel edition</span>
+      <span class="pill" style="background:#fce7f3;color:#be185d;">click to launch</span>
+    </div>
+    <p class="footer-note">✦ all tools unlocked ✦</p>
+  </footer>
 
-function digitsOf(v){ return String(v == null ? "" : v).replace(/\D/g, ""); }
+  <script>
+    const tools = [
+      { name: "LS Data Formatter",      desc: "Merges multiple Zoom export CSVs, converts them into Exotel-ready calling format, removes duplicate numbers, and auto-splits into 20,000-row files",     url: "https://amusearafat0.github.io/original-data-to-ls-data",        icon: "ti-table",                hue: "#f3d6f9", accent: "#b832c8", dot: "#e879f9" },
+      { name: "Zoom Attendee Sorting",  desc: "Cleans raw Zoom attendee reports — combines rejoins into one accurate watch time, removes duplicates, and tidies phone numbers to 10 digits",  url: "https://zoom-attendee-sorting.vercel.app/",                      icon: "ti-users-group",           hue: "#dde8fd", accent: "#3b5cf6", dot: "#818cf8" },
+      { name: "Refund Analysis",        desc: "Reads through workshop chat transcripts and analyzes attendee sentiment to help spot complaints or refund-risk conversations", url: "https://amitkarmakar-be10x.github.io/chatlog/",                  icon: "ti-receipt-refund",        hue: "#fde8ee", accent: "#db2777", dot: "#f472b6" },
+      { name: "YTJ File Maker",         desc: "Compares the Zoom attendance list against the registration list to generate a report of everyone who registered but never joined",  url: "https://arghya-007-afk.github.io/YTJ-Analyzer/",                 icon: "ti-brand-youtube",         hue: "#fde8d8", accent: "#ea580c", dot: "#fb923c" },
+      { name: "Main Data Maker",         desc: "Matches payment records against batch time-ranges for each product and splits them into separate, ready-to-download files per batch",   url: "https://amusearafat0.github.io/batch-splitter/",                  icon: "ti-database",              hue: "#d8fbe8", accent: "#16a34a", dot: "#4ade80" },
+      { name: "Save Chat Analyzer",     desc: "Reads Zoom Save Chat exports to detect spam, flag customer complaints, track handler replies, and check mandatory message compliance",        url: "https://arghya-007-afk.github.io/savechat-Analyzer-Pro/",        icon: "ti-message-circle-2",      hue: "#eadcfd", accent: "#7c3aed", dot: "#a78bfa" },
+      { name: "Exotic Data Sorting",    desc: "Cleans raw lead exports by splitting phone numbers into country codes, converting timestamps to IST, mapping platforms, and removing duplicates",     url: "https://amitkarmakar-be10x.github.io/EM-Data-Sort/",             icon: "ti-arrow-autofit-height",  hue: "#fdf3d8", accent: "#ca8a04", dot: "#fbbf24" },
+      { name: "Custom Zoom Payment",    desc: "Takes a registration list and two payment links, then creates a personalized payment link for every registrant with their name pre-filled",     url: "https://amusearafat0.github.io/custom-payment-link-generator/",  icon: "ti-link",                  hue: "#d8f5fd", accent: "#0891b2", dot: "#38bdf8" },
+      { name: "Transcript Summarizer",  desc: "Uses AI (Gemini, Claude, or Groq) to read workshop transcripts and produce a clear, timestamped summary report of what was covered",        url: "https://amusearafat0.github.io/workshop-summarizer/",            icon: "ti-file-text",             hue: "#f0d8fd", accent: "#a21caf", dot: "#e879f9" },
+      { name: "Certificate Generator",  desc: "Lets you pick a session/batch and generates the correctly formatted certificate data file for sending out to participants",      url: "https://amusearafat0.github.io/Certificate-Generator/",         icon: "ti-award",                 hue: "#fdecd8", accent: "#c2410c", dot: "#f97316" },
+      { name: "Prefilled Query Form",   desc: "Converts a Zoom registration export into a WATI-ready CSV with a personalized, pre-filled Google Form link for every contact",   url: "https://amitkarmakar-be10x.github.io/prefilled-query-from/",    icon: "ti-clipboard-text",        hue: "#dcfce7", accent: "#15803d", dot: "#4ade80" },
+      { name: "CSV Splitter",           desc: "Splits a large CSV into smaller chunks under your chosen size limit, packaging the output as a downloadable ZIP",      url: "https://amitkarmakar-be10x.github.io/csv-spliter/",              icon: "ti-cut",                   hue: "#fee2e2", accent: "#b91c1c", dot: "#f87171" },
+      { name: "Sat 9:30 Zoom Link",     desc: "Combines multiple CSVs into one, injects app download links (Android/iOS/Windows/Mac) into every row, then splits into <2MB files", url: "https://amitkarmakar-be10x.github.io/zoom-link-creator-930/",   icon: "ti-clock",                 hue: "#e0f2fe", accent: "#0369a1", dot: "#38bdf8" },
+      { name: "Exotic Data Maker",      desc: "Cleans raw lead exports by splitting phone numbers into country codes, converting timestamps to IST, mapping platforms, and removing duplicates",    url: "https://arghya-007-afk.github.io/Exotic-Lead-Refinery/",        icon: "ti-flask",                 hue: "#fae8ff", accent: "#a21caf", dot: "#e879f9" },
+      { name: "Sales Data File Maker",  desc: "Builds organized sales data files from raw input for the team — link couldn't be verified, may need an update",     url: "https://arghya-007-afk.github.io/Be10X-Sales-Data-File-Maker/", icon: "ti-chart-bar",             hue: "#fef3c7", accent: "#b45309", dot: "#fbbf24" },
+      { name: "Be10x Landing Page",     desc: "Simple holding page shown to attendees while they wait for the live session joining link to be shared",     url: "https://be-10x.netlify.app/",                                     icon: "ti-rocket",                hue: "#ede9fe", accent: "#6d28d9", dot: "#a78bfa" },
+      { name: "AC Data Refiner",        desc: "Cleans and refines raw AC data exports into a structured, ready-to-use format",     url: "https://amusearafat0.github.io/AC-Data-Refiner/",                icon: "ti-sparkles",              hue: "#e0f7fa", accent: "#0e7490", dot: "#22d3ee" },
+    ];
 
-// Comparison key: last 10 digits — immune to country-code presence differences
-function phoneKey(v){
-  const d = digitsOf(v);
-  if (!d) return null;
-  return d.length >= 10 ? d.slice(-10) : d;
-}
+    const grid = document.getElementById('toolsGrid');
 
-function emailKey(v){
-  const e = String(v == null ? "" : v).trim().toLowerCase();
-  return (e && e !== "nan" && e.includes("@")) ? e : null;
-}
-
-// Split into { cc, num } for the WATI columns
-function parsePhone(v){
-  let d = digitsOf(v).replace(/^0+/, "");
-  if (!d) return null;
-  if (d.length === 10 && "6789".includes(d[0])) return { cc: "91", num: d };
-  if (d.length === 12 && d.startsWith("91") && "6789".includes(d[2])) return { cc: "91", num: d.slice(2) };
-  for (const plen of [3, 2, 1]) {
-    const p = d.slice(0, plen);
-    if (DIAL.has(p) && d.length - plen >= 7 && d.length - plen <= 11) return { cc: p, num: d.slice(plen) };
-  }
-  if (d.length > 10) return { cc: "91", num: d.slice(-10) };
-  if (d.length >= 7) return { cc: "91", num: d };
-  return null;
-}
-
-// Core: AC rows minus PAID rows → unmatched, deduped by phone
-function runMatch(acRows, acPhoneCol, acEmailCol, paidRows, pdPhoneCol, pdEmailCol, rule){
-  const paidPhones = new Set(), paidEmails = new Set();
-  for (const r of paidRows) {
-    const pk = phoneKey(r[pdPhoneCol]); if (pk) paidPhones.add(pk);
-    const ek = emailKey(r[pdEmailCol]); if (ek) paidEmails.add(ek);
-  }
-  const stats = { total: acRows.length, paid: paidRows.length, invalid: 0, mPhone: 0, mEmail: 0, dup: 0 };
-  const seen = new Set(), out = [];
-  for (const r of acRows) {
-    const pk = phoneKey(r[acPhoneCol]);
-    const parsed = parsePhone(r[acPhoneCol]);
-    if (!pk || !parsed) { stats.invalid++; continue; }
-    const ek = emailKey(r[acEmailCol]);
-    if (paidPhones.has(pk)) { stats.mPhone++; continue; }
-    if (rule === "both" && ek && paidEmails.has(ek)) { stats.mEmail++; continue; }
-    if (seen.has(pk)) { stats.dup++; continue; }
-    seen.add(pk);
-    out.push({ cc: parsed.cc, num: parsed.num, email: ek || "" });
-  }
-  stats.out = out.length;
-  return { out, stats };
-}
-
-function csvCell(v){
-  const s = String(v == null ? "" : v);
-  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-}
-
-function buildCsv(rows, camp){
-  const head = ["Name","CountryCode","Phone","AllowBroadcast","AllowSMS","emailid","wsdt","time","calendar","zoomads","zoomid"];
-  const lines = [head.join(",")];
-  for (const r of rows) {
-    lines.push(["", r.cc, r.num, "TRUE", "TRUE", csvCell(r.email), csvCell(camp.wsdt), csvCell(camp.time), csvCell(camp.calendar), csvCell(camp.zoomads), csvCell(camp.zoomid)].join(","));
-  }
-  return lines.join("\r\n") + "\r\n";
-}
-/*ENGINE-END*/
-
-// ---------- UI ----------
-const $ = id => document.getElementById(id);
-const files = { AC: null, PD: null };   // { name, headers, rows }
-
-function detectCol(headers, patterns){
-  for (const p of patterns) { const hit = headers.find(h => p.test(h)); if (hit) return hit; }
-  return headers[0] || "";
-}
-
-function fillSelect(sel, headers, chosen){
-  sel.innerHTML = "";
-  for (const h of headers) {
-    const o = document.createElement("option");
-    o.value = o.textContent = h;
-    if (h === chosen) o.selected = true;
-    sel.appendChild(o);
-  }
-}
-
-function afterLoad(slot, name, headers, rows){
-  files[slot] = { name, headers, rows };
-  const drop = $(slot === "AC" ? "dropAC" : "dropPD");
-  drop.classList.add("loaded");
-  $(slot === "AC" ? "fileAC" : "filePD").textContent = name + " · " + rows.length.toLocaleString() + " rows";
-  const phoneCol = detectCol(headers, [/^phone\s*number$/i, /^phonenumber$/i, /phone/i, /mobile/i, /contact/i]);
-  const emailCol = detectCol(headers, [/^e-?mail$/i, /e-?mail/i]);
-  if (slot === "AC") { fillSelect($("acPhone"), headers, phoneCol); fillSelect($("acEmail"), headers, emailCol); $("mapAC").hidden = false; }
-  else { fillSelect($("pdPhone"), headers, phoneCol); fillSelect($("pdEmail"), headers, emailCol); $("mapPD").hidden = false; }
-  refreshReady();
-}
-
-function refreshReady(){
-  const ok = files.AC && files.PD;
-  $("btnGo").disabled = !ok;
-  $("status").textContent = ok ? "Ready — press Process files." :
-    files.AC ? "AC loaded. Now load the paid leads file." :
-    files.PD ? "Paid leads loaded. Now load the AC data file." : "Load both files to start.";
-  $("status").classList.remove("err");
-}
-
-function parseFile(file, slot){
-  const name = file.name, ext = name.split(".").pop().toLowerCase();
-  $("status").textContent = "Reading " + name + "…";
-  if (ext === "csv") {
-    Papa.parse(file, {
-      header: true, skipEmptyLines: "greedy",
-      complete: res => {
-        const headers = (res.meta.fields || []).filter(h => h && h.trim() !== "");
-        afterLoad(slot, name, headers, res.data);
-      },
-      error: () => showErr("Couldn't read " + name + " as CSV.")
+    tools.forEach(t => {
+      const a = document.createElement('a');
+      a.href = t.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = 'tool-card';
+      a.style.setProperty('--accent', t.accent);
+      a.setAttribute('aria-label', t.name);
+      a.innerHTML = `
+        <div class="card-sparkle" style="color:${t.dot};">✦</div>
+        <div class="card-icon-wrap" style="background:${t.hue};color:${t.accent};">
+          <i class="ti ${t.icon}" aria-hidden="true"></i>
+        </div>
+        <div class="card-text">
+          <div class="card-name">${t.name}</div>
+          <div class="card-desc">${t.desc}</div>
+        </div>
+        <div class="card-badge">→</div>
+      `;
+      grid.appendChild(a);
     });
-  } else if (ext === "xlsx" || ext === "xls") {
-    const fr = new FileReader();
-    fr.onload = e => {
-      try {
-        const wb = XLSX.read(e.target.result, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: true });
-        const headers = rows.length ? Object.keys(rows[0]) : [];
-        if (!rows.length) return showErr(name + " has no data rows.");
-        afterLoad(slot, name, headers, rows);
-      } catch (err) { showErr("Couldn't read " + name + " — is it a valid Excel file?"); }
-    };
-    fr.readAsArrayBuffer(file);
-  } else {
-    showErr("Unsupported file type: ." + ext + " — use .xlsx or .csv.");
-  }
-}
 
-function showErr(msg){ $("status").textContent = msg; $("status").classList.add("err"); }
+    const bgEl = document.getElementById('mgBg');
+    const pastelColors = ['#f9c6e8','#d8b4fe','#fca5d2','#a5b4fc','#fbcfe8','#e9d5ff','#fde68a'];
 
-function wireDrop(dropId, inputId, slot){
-  const drop = $(dropId), input = $(inputId);
-  drop.addEventListener("click", () => input.click());
-  drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
-  input.addEventListener("change", () => { if (input.files[0]) parseFile(input.files[0], slot); input.value = ""; });
-  ["dragover", "dragenter"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
-  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
-  drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) parseFile(f, slot); });
-}
-wireDrop("dropAC", "inAC", "AC");
-wireDrop("dropPD", "inPD", "PD");
+    for (let i = 0; i < 20; i++) {
+      const b = document.createElement('div');
+      b.className = 'bubble';
+      const sz = Math.random() * 16 + 8;
+      b.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;background:${pastelColors[Math.floor(Math.random()*pastelColors.length)]};animation-duration:${Math.random()*7+7}s;animation-delay:${Math.random()*10}s;bottom:0;`;
+      bgEl.appendChild(b);
+    }
 
-// Filename chip — count excludes the test row, matching the manual files
-let lastCount = null, lastCsv = null;
-function syncChip(){
-  const d = $("fDate").value.trim() || "<date>";
-  $("chipName").innerHTML = escapeHtml(d) + " " + escapeHtml($("fGroup").value.trim()) +
-    ' <span class="cnt">' + (lastCount == null ? "—" : lastCount) + "</span> With ZL.csv";
-}
-function escapeHtml(s){ return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
-["fDate", "fGroup"].forEach(id => $(id).addEventListener("input", syncChip));
-syncChip();
+    const sparkleSymbols = ['✦','✧','✿','❀','★','✨'];
+    for (let i = 0; i < 22; i++) {
+      const s = document.createElement('div');
+      s.className = 'sparkle';
+      s.textContent = sparkleSymbols[Math.floor(Math.random()*sparkleSymbols.length)];
+      s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;color:${pastelColors[Math.floor(Math.random()*pastelColors.length)]};animation-duration:${Math.random()*2+2}s;animation-delay:${Math.random()*4}s;`;
+      bgEl.appendChild(s);
+    }
 
-// Process
-$("btnGo").addEventListener("click", () => {
-  const rule = document.querySelector('input[name="rule"]:checked').value;
-  $("status").textContent = "Matching…";
-  setTimeout(() => {
-    const { out, stats } = runMatch(
-      files.AC.rows, $("acPhone").value, $("acEmail").value,
-      files.PD.rows, $("pdPhone").value, $("pdEmail").value, rule
-    );
-    lastCount = stats.out;
-    const camp = { wsdt: $("fWsdt").value, time: $("fTime").value, calendar: $("fCal").value, zoomads: $("fZad").value.trim(), zoomid: $("fZid").value.trim() };
-    const tNum = digitsOf($("tPhone").value);
-    const testRow = tNum ? { cc: digitsOf($("tCC").value) || "91", num: tNum, email: $("tEmail").value.trim() } : null;
-    const rows = testRow ? [testRow, ...out] : out;
-    lastCsv = buildCsv(rows, camp);
-    renderResult(rows, stats, camp, !!testRow);
-    syncChip();
-    $("btnDl").style.display = "inline-block";
-    let msg = "Done. " + stats.out.toLocaleString() + " unmatched leads" + (testRow ? " + your test row on top." : ". No test row added.");
-    const empty = [["wsdt","fWsdt"],["time","fTime"],["calendar","fCal"],["zoomads","fZad"],["zoomid","fZid"]]
-      .filter(([, id]) => !$(id).value.trim()).map(([k]) => k);
-    if (empty.length) msg += " Empty: " + empty.join(", ") + ".";
-    $("status").textContent = msg;
-  }, 30);
-});
+    const heartsEl = document.getElementById('hearts');
+    for (let i = 0; i < 16; i++) {
+      const h = document.createElement('div');
+      h.className = 'fheart';
+      h.textContent = ['♥','♡'][Math.floor(Math.random()*2)];
+      h.style.cssText = `left:${Math.random()*100}%;top:${40+Math.random()*55}%;color:${['#f9a8d4','#d8b4fe','#fca5d2'][Math.floor(Math.random()*3)]};animation-duration:${Math.random()*3+3}s;animation-delay:${Math.random()*8}s;`;
+      heartsEl.appendChild(h);
+    }
+  </script>
 
-function renderResult(rows, stats, camp, hasTest){
-  $("result").style.display = "block";
-  $("rCount").textContent = stats.out.toLocaleString();
-  const matched = stats.mPhone + stats.mEmail;
-  const denom = Math.max(1, matched + stats.out);
-  requestAnimationFrame(() => { $("barUn").style.width = (100 * stats.out / denom).toFixed(2) + "%"; });
+  </div>
 
-  const cells = [
-    ["AC rows", stats.total], ["Paid rows", stats.paid],
-    ["Matched by phone", stats.mPhone], ["Matched by email", stats.mEmail],
-    ["Invalid phones dropped", stats.invalid, stats.invalid > 0],
-    ["Duplicates removed", stats.dup, stats.dup > 0],
-    ["Test row", hasTest ? 1 : 0, !hasTest],
-    ["Final unmatched", stats.out]
-  ];
-  $("stats").innerHTML = cells.map(([k, v, warn]) =>
-    '<div class="stat' + (warn ? " warn" : "") + '"><div class="v">' + v.toLocaleString() + '</div><div class="k">' + k + "</div></div>"
-  ).join("");
+  <script>
+    const PASS_LIMITED = "Titanic12#";
+    const PASS_FULL = "123#Titanic12#";
+    const LIMITED_COUNT = 6;
 
-  const head = ["Name","CountryCode","Phone","AllowBroadcast","AllowSMS","emailid","wsdt","time","calendar","zoomads","zoomid"];
-  let html = "<tr>" + head.map(h => "<th>" + h + "</th>").join("") + "</tr>";
-  rows.slice(0, 8).forEach((r, i) => {
-    const cls = (hasTest && i === 0) ? ' class="testhl"' : "";
-    html += "<tr" + cls + "><td></td><td>" + r.cc + "</td><td>" + r.num + "</td><td>TRUE</td><td>TRUE</td><td>" +
-      escapeHtml(r.email) + "</td><td>" + escapeHtml(camp.wsdt) + "</td><td>" + escapeHtml(camp.time) +
-      "</td><td>" + escapeHtml(camp.calendar) + "</td><td>" + escapeHtml(camp.zoomads) + "</td><td>" + escapeHtml(camp.zoomid) + "</td></tr>";
-  });
-  $("ptable").innerHTML = html;
-}
+    const lockScreen = document.getElementById('lockScreen');
+    const appContent = document.getElementById('appContent');
+    const lockInput = document.getElementById('lockInput');
+    const lockBtn = document.getElementById('lockBtn');
+    const lockError = document.getElementById('lockError');
 
-// Download
-$("btnDl").addEventListener("click", () => {
-  if (!lastCsv) return;
-  const name = [$("fDate").value.trim(), $("fGroup").value.trim(), lastCount, "With ZL"].filter(v => v !== "" && v != null).join(" ") + ".csv";
-  const blob = new Blob([lastCsv], { type: "text/csv;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(a.href);
-});
-</script>
+    function applyAccess(level) {
+      lockScreen.style.display = 'none';
+      appContent.style.display = 'block';
+      if (level === 'limited') {
+        const cards = document.querySelectorAll('.tool-card');
+        cards.forEach((card, i) => {
+          if (i >= LIMITED_COUNT) card.style.display = 'none';
+        });
+        const pill = document.querySelector('.footer-pills .pill');
+        if (pill) pill.textContent = LIMITED_COUNT + " tools ready";
+      }
+    }
+
+    function tryUnlock() {
+      const val = lockInput.value;
+      if (val === PASS_FULL) {
+        applyAccess('full');
+      } else if (val === PASS_LIMITED) {
+        applyAccess('limited');
+      } else {
+        lockError.textContent = "Incorrect password, try again ✦";
+        lockInput.value = '';
+        lockInput.focus();
+      }
+    }
+
+    lockBtn.addEventListener('click', tryUnlock);
+    lockInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+
+    lockInput.focus();
+  </script>
 </body>
 </html>
