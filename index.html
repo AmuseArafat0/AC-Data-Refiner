@@ -37,21 +37,25 @@ body{
 a{color:var(--ember)}
 
 /* ---------- fixed atmosphere layers ---------- */
-.bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.bg-orbs i{position:absolute;border-radius:50%;filter:blur(50px);opacity:.28}
-.bg-orbs i:nth-child(1){width:340px;height:340px;left:-80px;top:12%;background:var(--wakfu)}
-.bg-orbs i:nth-child(2){width:260px;height:260px;right:-60px;top:52%;background:var(--ember)}
-.bg-orbs i:nth-child(3){width:220px;height:220px;left:35%;bottom:-100px;background:var(--gold)}
-.aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;
+.bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:strict}
+/* Soft-edge gradient instead of a solid circle + filter:blur(). A blurred,
+   scaling layer forces the browser to re-rasterize the blur on every frame
+   of its animation; baking the same soft edge into the gradient itself
+   gives the same glow with none of that per-frame recompute. */
+.bg-orbs i{position:absolute;border-radius:50%;opacity:.42}
+.bg-orbs i:nth-child(1){width:340px;height:340px;left:-80px;top:12%;background:radial-gradient(circle, var(--wakfu) 0%, transparent 68%)}
+.bg-orbs i:nth-child(2){width:260px;height:260px;right:-60px;top:52%;background:radial-gradient(circle, var(--ember) 0%, transparent 68%)}
+.bg-orbs i:nth-child(3){width:220px;height:220px;left:35%;bottom:-100px;background:radial-gradient(circle, var(--gold) 0%, transparent 68%)}
+.aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;contain:strict;
   background:conic-gradient(from 0deg, rgba(47,230,217,.08), rgba(232,178,61,.07), rgba(255,122,61,.07), rgba(47,230,217,.08));
-  filter:blur(60px);opacity:.7}
+  filter:blur(40px);opacity:.7}
 
-.glyph-layer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.glyph-layer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;contain:strict}
 .glyph{position:fixed;bottom:-10vh;font-family:var(--mono);font-weight:600;color:var(--wakfu);
   opacity:0;pointer-events:none;text-shadow:0 0 8px rgba(47,230,217,.6);will-change:transform,opacity}
 .glyph.gold{color:var(--gold);text-shadow:0 0 8px rgba(232,178,61,.6)}
 
-.fx-layer{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden}
+.fx-layer{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden;contain:strict}
 .spark{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--wakfu);
   box-shadow:0 0 8px 2px var(--wakfu-dim);transform:translate(-50%,-50%);
   animation:spark-fly .68s cubic-bezier(.2,.8,.3,1) forwards}
@@ -304,19 +308,21 @@ td{background:rgba(255,255,255,.5)}
   @keyframes portal-spin-rev{to{transform:rotate(-360deg)}}
   @keyframes core-pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.35);opacity:1}}
 
-  .stage{animation:stage-in .6s ease both, aura-breathe 5s ease-in-out 2.3s infinite}
-  .grid .stage:nth-child(1){animation-delay:.95s, 2.3s}
-  .grid .stage:nth-child(2){animation-delay:1.06s, 2.3s}
-  .grid .stage:nth-child(3){animation-delay:1.17s, 2.3s}
+  .stage{animation:stage-in .6s ease both}
+  .grid .stage:nth-child(1){animation-delay:.95s}
+  .grid .stage:nth-child(2){animation-delay:1.06s}
+  .grid .stage:nth-child(3){animation-delay:1.17s}
   @keyframes stage-in{from{opacity:0;filter:blur(6px)}to{opacity:1;filter:blur(0)}}
-  @keyframes aura-breathe{
-    0%,100%{box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 0 0 3px rgba(255,255,255,.35), inset 0 0 26px rgba(139,98,56,.18), 0 0 0px rgba(47,230,217,0)}
-    50%{box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 0 0 3px rgba(255,255,255,.35), inset 0 0 26px rgba(139,98,56,.18), 0 0 30px 2px rgba(47,230,217,.32)}
-  }
+  .stage::after{content:"";position:absolute;inset:0;border-radius:12px;pointer-events:none;
+    box-shadow:0 0 30px 2px rgba(47,230,217,.32);opacity:0;
+    animation:aura-breathe 5s ease-in-out 2.3s infinite}
+  @keyframes aura-breathe{0%,100%{opacity:0}50%{opacity:1}}
 
-  .bolt{animation:bolt-glint 4.5s ease-in-out infinite}
-  .bolt.tr{animation-delay:.6s} .bolt.bl{animation-delay:1.2s} .bolt.br{animation-delay:1.8s}
-  @keyframes bolt-glint{0%,85%,100%{filter:brightness(1)}90%{filter:brightness(1.6)}}
+  .bolt::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.9), transparent 60%);
+    opacity:0;animation:bolt-glint 4.5s ease-in-out infinite}
+  .bolt.tr::after{animation-delay:.6s} .bolt.bl::after{animation-delay:1.2s} .bolt.br::after{animation-delay:1.8s}
+  @keyframes bolt-glint{0%,85%,100%{opacity:0}90%{opacity:1}}
 
   .drop{transition:border-color .18s,background .18s,box-shadow .2s,transform .12s}
   .drop:hover{box-shadow:0 0 0 3px var(--wakfu-dim)}
@@ -373,6 +379,23 @@ td{background:rgba(255,255,255,.5)}
     10%{opacity:.55}
     88%{opacity:.4}
     100%{transform:translateY(-112vh) translateX(var(--sway,30px)) rotate(24deg) scale(1.1);opacity:0}
+  }
+
+  /* These loops run for as long as the tab is open. When it's just sitting
+     in the background nobody sees them, so pause them to save CPU/battery. */
+  body.fx-paused .aurora,
+  body.fx-paused .bg-orbs i,
+  body.fx-paused .energy i,
+  body.fx-paused .rune-portal,
+  body.fx-paused .rp-ring--mid,
+  body.fx-paused .rp-ticks,
+  body.fx-paused .rp-glyphs,
+  body.fx-paused .rp-core,
+  body.fx-paused header::after,
+  body.fx-paused header h1 .wati,
+  body.fx-paused .stage::after,
+  body.fx-paused .bolt::after{
+    animation-play-state:paused !important;
   }
 }
 </style>
@@ -646,6 +669,10 @@ const $ = id => document.getElementById(id);
 const files = { AC: null, PD: null };   // { name, headers, rows }
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+document.addEventListener("visibilitychange", () => {
+  document.body.classList.toggle("fx-paused", document.hidden);
+});
+
 // ---------- FX: rune sparks / shockwaves / flashes ----------
 function burst(target, opts = {}){
   if (reduceMotion || !target) return;
@@ -698,7 +725,7 @@ function screenFlash(target){
 const RUNES = "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ".split("");
 let glyphCount = 0;
 function spawnGlyph(){
-  if (reduceMotion || glyphCount > 22) return;
+  if (reduceMotion || document.hidden || glyphCount > 14) return;
   const g = document.createElement("span");
   g.className = "glyph" + (Math.random() < .45 ? " gold" : "");
   g.textContent = RUNES[Math.floor(Math.random() * RUNES.length)];
@@ -710,14 +737,15 @@ function spawnGlyph(){
   $("glyphLayer").appendChild(g);
   g.addEventListener("animationend", () => { g.remove(); glyphCount--; });
 }
+let glyphTimer = null;
 if (!reduceMotion){
-  setInterval(spawnGlyph, 1400);
+  glyphTimer = setInterval(spawnGlyph, 1800);
   setTimeout(spawnGlyph, 300);
 }
 
 // ---------- FX: portal ambient leak + cursor spark trail ----------
 function portalLeak(){
-  if (reduceMotion) return;
+  if (reduceMotion || document.hidden) return;
   const portal = $("runePortal");
   const rect = portal.getBoundingClientRect();
   if (!rect.width) return;
@@ -731,13 +759,13 @@ function portalLeak(){
   $("fxLayer").appendChild(s);
   s.addEventListener("animationend", () => s.remove());
 }
-if (!reduceMotion) setInterval(portalLeak, 700);
+if (!reduceMotion) setInterval(portalLeak, 1100);
 
 let lastTrail = 0;
 if (!reduceMotion){
   document.addEventListener("pointermove", e => {
     const now = performance.now();
-    if (now - lastTrail < 55) return;
+    if (now - lastTrail < 90) return;
     lastTrail = now;
     const s = document.createElement("span");
     s.className = "spark trail" + (Math.random() < .35 ? " gold" : "");
@@ -747,18 +775,26 @@ if (!reduceMotion){
     s.style.setProperty("--dy", (Math.random() * 14 - 18) + "px");
     $("fxLayer").appendChild(s);
     s.addEventListener("animationend", () => s.remove());
-  });
+  }, { passive: true });
 }
 
 // ---------- FX: subtle 3D tilt on panels ----------
 if (!reduceMotion){
+  let tiltRAF = null, pendingTilt = null;
   document.querySelectorAll(".stage").forEach(card => {
     card.addEventListener("mousemove", e => {
       const r = card.getBoundingClientRect();
       const px = (e.clientX - r.left) / r.width - .5;
       const py = (e.clientY - r.top) / r.height - .5;
-      card.style.transform = "perspective(900px) rotateX(" + (-py * 3.2).toFixed(2) + "deg) rotateY(" + (px * 3.2).toFixed(2) + "deg) translateY(-2px)";
-    });
+      pendingTilt = { card, px, py };
+      if (tiltRAF) return;
+      tiltRAF = requestAnimationFrame(() => {
+        tiltRAF = null;
+        if (!pendingTilt) return;
+        const { card, px, py } = pendingTilt;
+        card.style.transform = "perspective(900px) rotateX(" + (-py * 3.2).toFixed(2) + "deg) rotateY(" + (px * 3.2).toFixed(2) + "deg) translateY(-2px)";
+      });
+    }, { passive: true });
     card.addEventListener("mouseleave", () => { card.style.transform = ""; });
   });
 }
