@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AC Unmatched → WATI Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{
+  --navy:#14304F; --navy-deep:#0C1F35; --rust:#C2571B; --rust-dark:#A04310;
+  --paper:#EFF3F7; --card:#FFFFFF; --ink:#182430; --muted:#5F6F81;
+  --line:#D9E1E9; --green:#177A4C; --red:#B23A2F; --amber:#A8720E;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5}
+a{color:var(--rust)}
+
+header{background:var(--navy);color:#fff;padding:22px 28px;border-bottom:4px solid var(--rust)}
+.head-inner{max-width:1120px;margin:0 auto;display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+header h1{font-size:19px;font-weight:700;letter-spacing:.2px}
+header h1 span{color:#F4B98A;font-weight:600}
+.head-tag{font-family:var(--mono);font-size:11.5px;color:#9FB4CB;letter-spacing:.4px}
+
+main{max-width:1120px;margin:0 auto;padding:26px 28px 64px}
+.privacy{font-size:12.5px;color:var(--muted);margin-bottom:20px}
+.privacy b{color:var(--ink)}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:840px){.grid{grid-template-columns:1fr}}
+
+.stage{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px}
+.stage.full{grid-column:1/-1}
+.stage-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.stage-num{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--navy);border-radius:5px;padding:2px 8px}
+.stage-head h2{font-size:15px;font-weight:600}
+
+.drop{border:1.5px dashed var(--line);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:12px;background:#FAFCFE}
+.drop:hover,.drop:focus-visible{border-color:var(--rust);outline:none}
+.drop.over{border-color:var(--rust);background:#FCF3EC}
+.drop.loaded{border-style:solid;border-color:var(--green);background:#F2F9F5}
+.drop .d-title{font-weight:600;font-size:14px}
+.drop .d-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+.drop .d-file{font-family:var(--mono);font-size:12.5px;color:var(--green);margin-top:6px;word-break:break-all}
+.drop input{display:none}
+
+.colmap{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;font-size:13px;margin-bottom:14px}
+.colmap label{color:var(--muted);white-space:nowrap}
+select,input[type=text]{font-family:var(--mono);font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);width:100%}
+select:focus,input[type=text]:focus{outline:2px solid var(--rust);outline-offset:1px;border-color:var(--rust)}
+
+.rule{display:flex;gap:16px;font-size:13.5px;flex-wrap:wrap;margin-top:4px}
+.rule label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.rule input{accent-color:var(--rust)}
+
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+@media(max-width:560px){.fields{grid-template-columns:1fr}}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+.field .hint{font-size:11.5px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.field.wide{grid-column:1/-1}
+
+.testrow{margin-top:16px;border:1px solid var(--line);border-left:3px solid var(--rust);border-radius:8px;padding:12px 14px;background:#FDF8F3}
+.testrow .tr-head{font-size:12.5px;font-weight:600;margin-bottom:10px;color:var(--rust-dark)}
+.trgrid{display:grid;grid-template-columns:64px 1fr 1.3fr;gap:10px}
+@media(max-width:560px){.trgrid{grid-template-columns:64px 1fr}.trgrid .field:last-child{grid-column:1/-1}}
+tr.testhl td{background:#FCF0E5;font-weight:600}
+
+.filechip{margin-top:16px;background:var(--navy-deep);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:13.5px;color:#DCE6F0;word-break:break-all}
+.filechip .lbl{display:block;font-size:10.5px;letter-spacing:.6px;color:#8FA6BE;margin-bottom:4px;font-family:var(--sans);text-transform:uppercase}
+.filechip .cnt{color:#F4B98A;font-weight:600}
+
+.actions{display:flex;gap:12px;align-items:center;margin-top:18px;flex-wrap:wrap}
+button{font-family:var(--sans);font-size:14.5px;font-weight:600;border:none;border-radius:7px;padding:11px 22px;cursor:pointer}
+.btn-primary{background:var(--rust);color:#fff}
+.btn-primary:hover{background:var(--rust-dark)}
+.btn-primary:disabled{background:#C9B4A5;cursor:not-allowed}
+.btn-dl{background:var(--navy);color:#fff;display:none}
+.btn-dl:hover{background:var(--navy-deep)}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.status{font-size:13px;color:var(--muted)}
+.status.err{color:var(--red);font-weight:500}
+
+.result{display:none;margin-top:20px;border-top:1px solid var(--line);padding-top:18px}
+.bignum{font-family:var(--mono);font-size:38px;font-weight:600;color:var(--rust);line-height:1.1}
+.bignum small{font-size:14px;color:var(--muted);font-family:var(--sans);font-weight:500;display:block}
+.bar{height:14px;border-radius:7px;background:var(--navy);overflow:hidden;display:flex;margin:14px 0 8px}
+.bar .un{background:var(--rust);height:100%;width:0;transition:width .7s ease}
+@media(prefers-reduced-motion:reduce){.bar .un{transition:none}}
+.legend{display:flex;gap:18px;font-size:12.5px;color:var(--muted);margin-bottom:16px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.legend .li-m i{background:var(--navy)} .legend .li-u i{background:var(--rust)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.stat{background:#F7FAFC;border:1px solid var(--line);border-radius:7px;padding:10px 12px}
+.stat .v{font-family:var(--mono);font-size:19px;font-weight:600}
+.stat .k{font-size:11.5px;color:var(--muted);margin-top:2px}
+.stat.warn .v{color:var(--amber)}
+
+table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:left;white-space:nowrap}
+th{background:var(--navy);color:#fff;font-weight:500;font-size:11px}
+.tblwrap{overflow-x:auto;border-radius:7px;border:1px solid var(--line)}
+.preview-note{font-size:12px;color:var(--muted);margin:12px 0 6px}
+footer{max-width:1120px;margin:0 auto;padding:0 28px 40px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <h1>AC Unmatched → <span>WATI Builder</span></h1>
+    <div class="head-tag">Be10x · Lead Ops · abandoned cart minus paid</div>
+  </div>
+</header>
+
+<main>
+  <p class="privacy"><b>Runs entirely in your browser.</b> Files are parsed locally and never uploaded anywhere — safe for lead data.</p>
+
+  <div class="grid">
+
+    <!-- STAGE 1: FILES -->
+    <section class="stage">
+      <div class="stage-head"><span class="stage-num">1</span><h2>Load files</h2></div>
+
+      <div class="drop" id="dropAC" tabindex="0" role="button" aria-label="Load AC data file">
+        <div class="d-title">AC data</div>
+        <div class="d-sub">Abandoned cart export · .xlsx or .csv</div>
+        <div class="d-file" id="fileAC"></div>
+        <input type="file" id="inAC" accept=".xlsx,.xls,.csv">
+      </div>
+      <div class="colmap" id="mapAC" hidden>
+        <label for="acPhone">Phone column</label><select id="acPhone"></select>
+        <label for="acEmail">Email column</label><select id="acEmail"></select>
+      </div>
+
+      <div class="drop" id="dropPD" tabindex="0" role="button" aria-label="Load paid leads file">
+        <div class="d-title">Paid leads</div>
+        <div class="d-sub">All paid leads export · .csv or .xlsx</div>
+        <div class="d-file" id="filePD"></div>
+        <input type="file" id="inPD" accept=".xlsx,.xls,.csv">
+      </div>
+      <div class="colmap" id="mapPD" hidden>
+        <label for="pdPhone">Phone column</label><select id="pdPhone"></select>
+        <label for="pdEmail">Email column</label><select id="pdEmail"></select>
+      </div>
+
+      <div class="rule" role="radiogroup" aria-label="Match rule">
+        <label><input type="radio" name="rule" value="both" checked> Match by phone or email</label>
+        <label><input type="radio" name="rule" value="phone"> Phone only</label>
+      </div>
+    </section>
+
+    <!-- STAGE 2: CAMPAIGN -->
+    <section class="stage">
+      <div class="stage-head"><span class="stage-num">2</span><h2>Campaign details</h2></div>
+      <div class="fields">
+        <div class="field">
+          <label for="fDate">Workshop date label (for filename)</label>
+          <input type="text" id="fDate" placeholder="21st June" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fGroup">Group tag (for filename)</label>
+          <input type="text" id="fGroup" value="G1A" autocomplete="off">
+        </div>
+        <div class="field wide">
+          <label for="fWsdt">wsdt</label>
+          <input type="text" id="fWsdt" placeholder="21st June  | 11 AM" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fTime">time</label>
+          <input type="text" id="fTime" placeholder="11.00 AM" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fCal">calendar</label>
+          <input type="text" id="fCal" placeholder="Calendar-W1-21st-June" autocomplete="off">
+        </div>
+        <div class="field wide">
+          <label for="fZad">zoomads (webinar registration ID)</label>
+          <input type="text" id="fZad" placeholder="WN_xxxxxxxxxxxxxxxxxx" autocomplete="off">
+        </div>
+        <div class="field wide">
+          <label for="fZid">zoomid (meeting ID)</label>
+          <input type="text" id="fZid" placeholder="000 0000 0000" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="testrow">
+        <div class="tr-head">Test row — added as row 1 so the broadcast reaches you first</div>
+        <div class="trgrid">
+          <div class="field">
+            <label for="tCC">CC</label>
+            <input type="text" id="tCC" value="91" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="tPhone">Your phone</label>
+            <input type="text" id="tPhone" placeholder="9876543210" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="tEmail">Your email</label>
+            <input type="text" id="tEmail" placeholder="you@be10x.com" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="filechip">
+        <span class="lbl">Output file</span>
+        <span id="chipName"></span>
+      </div>
+    </section>
+
+    <!-- STAGE 3: RESULT -->
+    <section class="stage full">
+      <div class="stage-head"><span class="stage-num">3</span><h2>Process &amp; download</h2></div>
+      <div class="actions">
+        <button class="btn-primary" id="btnGo" disabled>Process files</button>
+        <button class="btn-dl" id="btnDl">Download CSV</button>
+        <span class="status" id="status">Load both files to start.</span>
+      </div>
+
+      <div class="result" id="result">
+        <div class="bignum"><span id="rCount">0</span><small>unmatched leads → broadcast file</small></div>
+        <div class="bar" aria-hidden="true"><div class="un" id="barUn"></div></div>
+        <div class="legend">
+          <span class="li-m"><i></i>Matched in paid (excluded)</span>
+          <span class="li-u"><i></i>Unmatched (in file)</span>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="preview-note">Preview — first 8 rows</div>
+        <div class="tblwrap"><table id="ptable"></table></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>Header order, TRUE/TRUE flags and CRLF line endings match the WATI import format exactly. The test row goes in as row 1; the count in the filename covers leads only. Output name: <span style="font-family:var(--mono)">&lt;date&gt; &lt;group&gt; &lt;count&gt; With ZL.csv</span></footer>
+
+<script>
+/*ENGINE-START*/
+const DIAL = new Set(("1 7 20 27 30 31 32 33 34 36 39 40 41 43 44 45 46 47 48 49 51 52 53 54 55 56 57 58 60 61 62 63 64 65 66 81 82 84 86 90 91 92 93 94 95 98 211 212 213 216 218 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 248 249 250 251 252 253 254 255 256 257 258 260 261 262 263 264 265 266 267 268 269 291 297 298 299 350 351 352 353 354 355 356 357 358 359 370 371 372 373 374 375 376 377 378 380 381 382 383 385 386 387 389 420 421 423 500 501 502 503 504 505 506 507 508 509 590 591 592 593 594 595 596 597 598 599 670 672 673 674 675 676 677 678 679 680 681 682 683 685 686 687 688 689 690 691 692 850 852 853 855 856 880 886 960 961 962 963 964 965 966 967 968 970 971 972 973 974 975 976 977 992 993 994 995 996 998").split(" "));
+
+function digitsOf(v){ return String(v == null ? "" : v).replace(/\D/g, ""); }
+
+// Comparison key: last 10 digits — immune to country-code presence differences
+function phoneKey(v){
+  const d = digitsOf(v);
+  if (!d) return null;
+  return d.length >= 10 ? d.slice(-10) : d;
+}
+
+function emailKey(v){
+  const e = String(v == null ? "" : v).trim().toLowerCase();
+  return (e && e !== "nan" && e.includes("@")) ? e : null;
+}
+
+// Split into { cc, num } for the WATI columns
+function parsePhone(v){
+  let d = digitsOf(v).replace(/^0+/, "");
+  if (!d) return null;
+  if (d.length === 10 && "6789".includes(d[0])) return { cc: "91", num: d };
+  if (d.length === 12 && d.startsWith("91") && "6789".includes(d[2])) return { cc: "91", num: d.slice(2) };
+  for (const plen of [3, 2, 1]) {
+    const p = d.slice(0, plen);
+    if (DIAL.has(p) && d.length - plen >= 7 && d.length - plen <= 11) return { cc: p, num: d.slice(plen) };
+  }
+  if (d.length > 10) return { cc: "91", num: d.slice(-10) };
+  if (d.length >= 7) return { cc: "91", num: d };
+  return null;
+}
+
+// Core: AC rows minus PAID rows → unmatched, deduped by phone
+function runMatch(acRows, acPhoneCol, acEmailCol, paidRows, pdPhoneCol, pdEmailCol, rule){
+  const paidPhones = new Set(), paidEmails = new Set();
+  for (const r of paidRows) {
+    const pk = phoneKey(r[pdPhoneCol]); if (pk) paidPhones.add(pk);
+    const ek = emailKey(r[pdEmailCol]); if (ek) paidEmails.add(ek);
+  }
+  const stats = { total: acRows.length, paid: paidRows.length, invalid: 0, mPhone: 0, mEmail: 0, dup: 0 };
+  const seen = new Set(), out = [];
+  for (const r of acRows) {
+    const pk = phoneKey(r[acPhoneCol]);
+    const parsed = parsePhone(r[acPhoneCol]);
+    if (!pk || !parsed) { stats.invalid++; continue; }
+    const ek = emailKey(r[acEmailCol]);
+    if (paidPhones.has(pk)) { stats.mPhone++; continue; }
+    if (rule === "both" && ek && paidEmails.has(ek)) { stats.mEmail++; continue; }
+    if (seen.has(pk)) { stats.dup++; continue; }
+    seen.add(pk);
+    out.push({ cc: parsed.cc, num: parsed.num, email: ek || "" });
+  }
+  stats.out = out.length;
+  return { out, stats };
+}
+
+function csvCell(v){
+  const s = String(v == null ? "" : v);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function buildCsv(rows, camp){
+  const head = ["Name","CountryCode","Phone","AllowBroadcast","AllowSMS","emailid","wsdt","time","calendar","zoomads","zoomid"];
+  const lines = [head.join(",")];
+  for (const r of rows) {
+    lines.push(["", r.cc, r.num, "TRUE", "TRUE", csvCell(r.email), csvCell(camp.wsdt), csvCell(camp.time), csvCell(camp.calendar), csvCell(camp.zoomads), csvCell(camp.zoomid)].join(","));
+  }
+  return lines.join("\r\n") + "\r\n";
+}
+/*ENGINE-END*/
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+const files = { AC: null, PD: null };   // { name, headers, rows }
+
+function detectCol(headers, patterns){
+  for (const p of patterns) { const hit = headers.find(h => p.test(h)); if (hit) return hit; }
+  return headers[0] || "";
+}
+
+function fillSelect(sel, headers, chosen){
+  sel.innerHTML = "";
+  for (const h of headers) {
+    const o = document.createElement("option");
+    o.value = o.textContent = h;
+    if (h === chosen) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+
+function afterLoad(slot, name, headers, rows){
+  files[slot] = { name, headers, rows };
+  const drop = $(slot === "AC" ? "dropAC" : "dropPD");
+  drop.classList.add("loaded");
+  $(slot === "AC" ? "fileAC" : "filePD").textContent = name + " · " + rows.length.toLocaleString() + " rows";
+  const phoneCol = detectCol(headers, [/^phone\s*number$/i, /^phonenumber$/i, /phone/i, /mobile/i, /contact/i]);
+  const emailCol = detectCol(headers, [/^e-?mail$/i, /e-?mail/i]);
+  if (slot === "AC") { fillSelect($("acPhone"), headers, phoneCol); fillSelect($("acEmail"), headers, emailCol); $("mapAC").hidden = false; }
+  else { fillSelect($("pdPhone"), headers, phoneCol); fillSelect($("pdEmail"), headers, emailCol); $("mapPD").hidden = false; }
+  refreshReady();
+}
+
+function refreshReady(){
+  const ok = files.AC && files.PD;
+  $("btnGo").disabled = !ok;
+  $("status").textContent = ok ? "Ready — press Process files." :
+    files.AC ? "AC loaded. Now load the paid leads file." :
+    files.PD ? "Paid leads loaded. Now load the AC data file." : "Load both files to start.";
+  $("status").classList.remove("err");
+}
+
+function parseFile(file, slot){
+  const name = file.name, ext = name.split(".").pop().toLowerCase();
+  $("status").textContent = "Reading " + name + "…";
+  if (ext === "csv") {
+    Papa.parse(file, {
+      header: true, skipEmptyLines: "greedy",
+      complete: res => {
+        const headers = (res.meta.fields || []).filter(h => h && h.trim() !== "");
+        afterLoad(slot, name, headers, res.data);
+      },
+      error: () => showErr("Couldn't read " + name + " as CSV.")
+    });
+  } else if (ext === "xlsx" || ext === "xls") {
+    const fr = new FileReader();
+    fr.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: true });
+        const headers = rows.length ? Object.keys(rows[0]) : [];
+        if (!rows.length) return showErr(name + " has no data rows.");
+        afterLoad(slot, name, headers, rows);
+      } catch (err) { showErr("Couldn't read " + name + " — is it a valid Excel file?"); }
+    };
+    fr.readAsArrayBuffer(file);
+  } else {
+    showErr("Unsupported file type: ." + ext + " — use .xlsx or .csv.");
+  }
+}
+
+function showErr(msg){ $("status").textContent = msg; $("status").classList.add("err"); }
+
+function wireDrop(dropId, inputId, slot){
+  const drop = $(dropId), input = $(inputId);
+  drop.addEventListener("click", () => input.click());
+  drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
+  input.addEventListener("change", () => { if (input.files[0]) parseFile(input.files[0], slot); input.value = ""; });
+  ["dragover", "dragenter"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) parseFile(f, slot); });
+}
+wireDrop("dropAC", "inAC", "AC");
+wireDrop("dropPD", "inPD", "PD");
+
+// Filename chip — count excludes the test row, matching the manual files
+let lastCount = null, lastCsv = null;
+function syncChip(){
+  const d = $("fDate").value.trim() || "<date>";
+  $("chipName").innerHTML = escapeHtml(d) + " " + escapeHtml($("fGroup").value.trim()) +
+    ' <span class="cnt">' + (lastCount == null ? "—" : lastCount) + "</span> With ZL.csv";
+}
+function escapeHtml(s){ return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+["fDate", "fGroup"].forEach(id => $(id).addEventListener("input", syncChip));
+syncChip();
+
+// Process
+$("btnGo").addEventListener("click", () => {
+  const rule = document.querySelector('input[name="rule"]:checked').value;
+  $("status").textContent = "Matching…";
+  setTimeout(() => {
+    const { out, stats } = runMatch(
+      files.AC.rows, $("acPhone").value, $("acEmail").value,
+      files.PD.rows, $("pdPhone").value, $("pdEmail").value, rule
+    );
+    lastCount = stats.out;
+    const camp = { wsdt: $("fWsdt").value, time: $("fTime").value, calendar: $("fCal").value, zoomads: $("fZad").value.trim(), zoomid: $("fZid").value.trim() };
+    const tNum = digitsOf($("tPhone").value);
+    const testRow = tNum ? { cc: digitsOf($("tCC").value) || "91", num: tNum, email: $("tEmail").value.trim() } : null;
+    const rows = testRow ? [testRow, ...out] : out;
+    lastCsv = buildCsv(rows, camp);
+    renderResult(rows, stats, camp, !!testRow);
+    syncChip();
+    $("btnDl").style.display = "inline-block";
+    let msg = "Done. " + stats.out.toLocaleString() + " unmatched leads" + (testRow ? " + your test row on top." : ". No test row added.");
+    const empty = [["wsdt","fWsdt"],["time","fTime"],["calendar","fCal"],["zoomads","fZad"],["zoomid","fZid"]]
+      .filter(([, id]) => !$(id).value.trim()).map(([k]) => k);
+    if (empty.length) msg += " Empty: " + empty.join(", ") + ".";
+    $("status").textContent = msg;
+  }, 30);
+});
+
+function renderResult(rows, stats, camp, hasTest){
+  $("result").style.display = "block";
+  $("rCount").textContent = stats.out.toLocaleString();
+  const matched = stats.mPhone + stats.mEmail;
+  const denom = Math.max(1, matched + stats.out);
+  requestAnimationFrame(() => { $("barUn").style.width = (100 * stats.out / denom).toFixed(2) + "%"; });
+
+  const cells = [
+    ["AC rows", stats.total], ["Paid rows", stats.paid],
+    ["Matched by phone", stats.mPhone], ["Matched by email", stats.mEmail],
+    ["Invalid phones dropped", stats.invalid, stats.invalid > 0],
+    ["Duplicates removed", stats.dup, stats.dup > 0],
+    ["Test row", hasTest ? 1 : 0, !hasTest],
+    ["Final unmatched", stats.out]
+  ];
+  $("stats").innerHTML = cells.map(([k, v, warn]) =>
+    '<div class="stat' + (warn ? " warn" : "") + '"><div class="v">' + v.toLocaleString() + '</div><div class="k">' + k + "</div></div>"
+  ).join("");
+
+  const head = ["Name","CountryCode","Phone","AllowBroadcast","AllowSMS","emailid","wsdt","time","calendar","zoomads","zoomid"];
+  let html = "<tr>" + head.map(h => "<th>" + h + "</th>").join("") + "</tr>";
+  rows.slice(0, 8).forEach((r, i) => {
+    const cls = (hasTest && i === 0) ? ' class="testhl"' : "";
+    html += "<tr" + cls + "><td></td><td>" + r.cc + "</td><td>" + r.num + "</td><td>TRUE</td><td>TRUE</td><td>" +
+      escapeHtml(r.email) + "</td><td>" + escapeHtml(camp.wsdt) + "</td><td>" + escapeHtml(camp.time) +
+      "</td><td>" + escapeHtml(camp.calendar) + "</td><td>" + escapeHtml(camp.zoomads) + "</td><td>" + escapeHtml(camp.zoomid) + "</td></tr>";
+  });
+  $("ptable").innerHTML = html;
+}
+
+// Download
+$("btnDl").addEventListener("click", () => {
+  if (!lastCsv) return;
+  const name = [$("fDate").value.trim(), $("fGroup").value.trim(), lastCount, "With ZL"].filter(v => v !== "" && v != null).join(" ") + ".csv";
+  const blob = new Blob([lastCsv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+</script>
+</body>
+</html>
